@@ -81,7 +81,6 @@ echo_title "Discovering process types"
 if [[ -f "$build_root/Procfile" ]]; then
 	types=$(ruby -e "require 'yaml';puts YAML.load_file('$build_root/Procfile').keys().join(', ')")
 	echo_normal "Procfile declares types -> $types"
-  ruby -e "require 'yaml'; require 'fileutils'; (YAML.load_file('$build_root/Procfile') || {}).each { |name, cmd| FileUtils.mkdir_p(\"/etc/service/#{name}\"); File.open(\"/etc/service/#{name}/run\", 'w+') {|f| f.write(cmd) }; File.chmod(0777, \"/etc/service/#{name}/run\"); }"
 fi
 default_types=""
 if [[ -s "$build_root/.release" ]]; then
@@ -100,3 +99,4 @@ echo_title "Compiled app size is $app_size"
 # Cleanup
 rm -rf $build_root
 rm -rf $buildpack_root
+rm $env_dir/*
