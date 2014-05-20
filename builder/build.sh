@@ -102,6 +102,7 @@ fi
 
 ## Copy env vars
 
+cd $build_root
 shopt -s nullglob
 mkdir -p .profile.d
 if [[ -s .release ]]; then
