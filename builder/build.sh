@@ -7,9 +7,11 @@ build_root=/tmp/build
 cache_root=/tmp/cache
 buildpack_root=/tmp/buildpacks
 env_dir=/etc/container_environment
+init_dir=/etc/my_init.d
 
 mkdir -p $cache_root
 mkdir -p $buildpack_root
+mkdir -p $init_dir
 
 function echo_title() {
   echo $'\e[1G----->' $*
@@ -87,6 +89,27 @@ if [[ -s "$build_root/.release" ]]; then
 	default_types=$(ruby -e "require 'yaml';puts (YAML.load_file('$build_root/.release')['default_process_types'] || {}).keys().join(', ')")
 	[[ $default_types ]] && echo_normal "Default process types for $buildpack_name -> $default_types"
 fi
+
+## Create runit services
+
+if [[ -f "$build_root/Procfile" ]]; then
+  ruby -e "require 'yaml'; require 'fileutils'; (YAML.load_file('$build_root/Procfile') || {}).each { |name, cmd| FileUtils.mkdir_p(\"/etc/service/#{name}\"); File.open(\"/etc/service/#{name}/run\", 'w+') {|f| f.write(\"#\!/bin/sh\ncd $app_dir\nexec \" + cmd) }; File.chmod(0777, \"/etc/service/#{name}/run\"); }"
+  echo_normal "Writing Procfile services to /etc/service"
+else
+  ruby -e "require 'yaml'; require 'fileutils'; (YAML.load_file('$build_root/.release')['default_process_types'] || {}).each { |name, cmd| next if %w(rake console).include?(name); FileUtils.mkdir_p(\"/etc/service/#{name}\"); File.open(\"/etc/service/#{name}/run\", 'w+') {|f| f.write(\"#\!/bin/sh\ncd $app_dir\nexec \" + cmd) }; File.chmod(0777, \"/etc/service/#{name}/run\"); }"
+  echo_normal "Writing default services to /etc/service"
+fi
+
+## Copy env vars
+
+shopt -s nullglob
+mkdir -p .profile.d
+if [[ -s .release ]]; then
+  ruby -e "require 'yaml';(YAML.load_file('.release')['config_vars'] || {}).each{|k,v| puts \"export #{k}='#{v}'\"}" > .profile.d/config_vars.sh
+fi
+
+chmod +x .profile.d/*.sh
+cp .profile.d/*.sh $init_dir
 
 ## Produce slug
 

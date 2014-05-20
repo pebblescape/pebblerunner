@@ -1,0 +1,9 @@
+#!/bin/bash
+set -eo pipefail
+
+export HOME=/app
+cd $HOME
+
+## Run!
+
+bash -c "$command"
