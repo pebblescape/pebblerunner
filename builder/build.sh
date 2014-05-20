@@ -100,17 +100,18 @@ else
   echo_normal "Writing default services to /etc/service"
 fi
 
-## Copy env vars
+## Set env vars
+
+rm $env_dir/*
 
 cd $build_root
-shopt -s nullglob
-mkdir -p .profile.d
 if [[ -s .release ]]; then
-  ruby -e "require 'yaml';(YAML.load_file('.release')['config_vars'] || {}).each{|k,v| puts \"export #{k}='#{v}'\"}" > .profile.d/config_vars.sh
+  ruby -e "require 'yaml';(YAML.load_file('.release')['config_vars'] || {}).each{|k,v| File.open(\"$env_dir/#{k}\", 'w+') {|f| f.write(v) }; }"
 fi
 
-chmod +x .profile.d/*.sh
-cp .profile.d/*.sh $init_dir
+echo "$app_dir/vendor/bundle/ruby/2.1.0:$GEM_PATH" > $env_dir/GEM_PATH
+echo "en_US.UTF-8"  > $env_dir/LANG
+echo "$app_dir/bin:$app_dir/vendor/bundle/bin:$app_dir/vendor/bundle/ruby/2.1.0/bin:$PATH"  > $env_dir/PATH
 
 ## Produce slug
 
