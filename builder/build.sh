@@ -81,7 +81,7 @@ echo_title "Discovering process types"
 if [[ -f "$build_root/Procfile" ]]; then
 	types=$(ruby -e "require 'yaml';puts YAML.load_file('$build_root/Procfile').keys().join(', ')")
 	echo_normal "Procfile declares types -> $types"
-  ruby -e "require 'yaml'; require 'fileutils'; (YAML.load_file('$build_root/Procfile')['default_process_types'] || {}).each { |name, cmd| FileUtils.mkdir_p(\"/etc/service/#{name}\"); File.open(\"/etc/service/#{name}/run\", 'w+') {|f| f.write(cmd) }; File.chmod(0777, \"/etc/service/#{name}/run\"); }"
+  ruby -e "require 'yaml'; require 'fileutils'; (YAML.load_file('$build_root/Procfile') || {}).each { |name, cmd| FileUtils.mkdir_p(\"/etc/service/#{name}\"); File.open(\"/etc/service/#{name}/run\", 'w+') {|f| f.write(cmd) }; File.chmod(0777, \"/etc/service/#{name}/run\"); }"
 fi
 default_types=""
 if [[ -s "$build_root/.release" ]]; then
