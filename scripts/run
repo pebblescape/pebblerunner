@@ -1,0 +1,10 @@
+#!/usr/bin/env ruby
+
+# sync output
+$stdout.sync = true
+
+$:.unshift File.expand_path("../lib", __FILE__)
+require "pebble_runner"
+
+PebbleRunner::ShellHelpers.initialize_env("/etc/env_dir")
+PebbleRunner::Init.start ARGV[0], (ARGV[1..-1] || []).join(" ")

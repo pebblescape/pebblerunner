@@ -1,9 +1,10 @@
 FROM pebbles/cedarish
 MAINTAINER krisrang "mail@rang.ee"
 
-ADD ./builder/ /builder
-ADD ./run/ /run
-RUN mkdir -p /tmp/buildpacks && cd /tmp/buildpacks && xargs -L 1 git clone --depth=1 < /builder/buildpacks.txt
+ADD ./scripts/ /scripts
+RUN mkdir -p /tmp/buildpacks && cd /tmp/buildpacks && xargs -L 1 git clone --depth=1 < /scripts/buildpacks.txt
+ADD ./scripts/setuser /sbin/setuser
+RUN useradd app
 
 VOLUME ["/pushed"]
-ENTRYPOINT ["/sbin/my_init"]
+ENTRYPOINT ["/scripts/run"]
