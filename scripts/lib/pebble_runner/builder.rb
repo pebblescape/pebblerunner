@@ -117,15 +117,6 @@ class PebbleRunner::Builder
         runit_service(name, cmd)
       end
     end
-  end
-  
-  def write_env
-    FileUtils.mkdir_p(File.join(build_root, ".profile.d"))
-    (YAML.load_file(File.join(build_root, ".release"))['config_vars'] || {}).each do |k,v|
-      File.open(File.join(build_root, ".profile.d", "config_vars"), 'a+') do |f|
-        f.write("export #{k}=#{v}\n")
-      end
-    end
     
     exec = <<-EOF
 #!/bin/bash
@@ -138,6 +129,14 @@ EOF
     
     File.open(File.join(build_root, "exec"), 'w+') { |f| f.write(exec) }
     File.chmod(0777, File.join(build_root, "exec"))
+  end
+  
+  def write_env
+    FileUtils.mkdir_p(env_dir)
+    
+    (YAML.load_file(File.join(build_root, ".release"))['config_vars'] || {}).each do |k,v|
+      File.open(File.join(env_dir, k.upcase), 'w+') { |f| f.write(v) }
+    end
   end
   
   def cleanup
@@ -164,7 +163,7 @@ EOF
     runner = <<-EOF
 #!/bin/sh
 exec 2>&1
-exec chpst -u app /app/exec #{cmd}
+exec /app/exec chpst -u app #{cmd}
 EOF
 
     logger = <<-EOF

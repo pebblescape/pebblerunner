@@ -7,7 +7,7 @@ module PebbleRunner
     include PebbleRunner::ShellHelpers
     
     def run_exec(command)
-      exec(app_env, "/sbin/setuser app /app/exec #{command}")
+      exec(app_env, "/app/exec chpst -u app #{command}")
     end
     
     def run_service

@@ -26,12 +26,7 @@ service docker restart
 usermod -a -G docker vagrant
 
 ## Test app
-mkdir -p /pushed
-git clone https://github.com/heroku/ruby-rails-sample.git /pushed
-useradd app
-
-docker run -d --name mike-redis -v /home/pebbles/data/redis:/var/lib/redis pebbles/redis
-docker run -d --name mike-postgresql -v /home/pebbles/data/postgres:/data/main pebbles/postgresql
+git clone https://github.com/heroku/ruby-rails-sample.git /vagrant/sample
 
 ## Cleanup
 apt-get clean
