@@ -18,7 +18,7 @@ class PebbleRunner::Builder
     discover_services
     write_services
     write_env
-    cleanup
+    finalize
   end
   
   private
@@ -131,15 +131,23 @@ EOF
     File.chmod(0777, File.join(build_root, "exec"))
   end
   
+  # Create env_dir and write release config_vars to app's .profile.d
   def write_env
     FileUtils.mkdir_p(env_dir)
     
+    config_vars = ""
+    config_vars_path = File.join(build_root, ".profile.d", "config_vars.sh")
+    
     (YAML.load_file(File.join(build_root, ".release"))['config_vars'] || {}).each do |k,v|
-      File.open(File.join(env_dir, k.upcase), 'w+') { |f| f.write(v) }
+      config_vars += "export #{k.upcase}=#{v}\n"
     end
+    
+    File.open(config_vars_path, 'w+') { |f| f.write(config_vars) }
+    File.chmod(0777, config_vars_path)
   end
   
-  def cleanup
+  def finalize
+    # Copy final version of the app to app_dir
     FileUtils.rm_rf(app_dir)
     FileUtils.cp_r("#{build_root}/.", app_dir)
     FileUtils.chown_R('app', 'app', app_dir)
@@ -147,6 +155,7 @@ EOF
     app_size = run("du -hs #{app_dir} | cut -f1")
     puts "Compiled app size is #{app_size}"
     
+    # Cleanup
     FileUtils.rm_rf(build_root)
     FileUtils.rm_rf(buildpack_root)
     
