@@ -5,8 +5,8 @@ require "pebble_runner/shell_helpers"
 class PebbleRunner::Builder
   include PebbleRunner::ShellHelpers
   
-  attr_accessor :pushed_dir, :app_dir, :build_root, :cache_root, :buildpack_root,
-                :env_dir, :selected_buildpack, :buildpack_name
+  attr_accessor :app_dir, :build_root, :cache_root, :buildpack_root,
+                :env_dir, :selected_buildpack, :buildpack_name, :tmptar
   
   def initialize
     set_defaults
@@ -24,18 +24,21 @@ class PebbleRunner::Builder
   private
   
   def set_defaults
-    @pushed_dir = "/pushed"
     @app_dir = "/app"
     @build_root = "/tmp/build"
     @cache_root = "/tmp/cache"
     @buildpack_root = "/tmp/buildpacks"
     @env_dir = "/etc/env_dir"
+    @tmptar = "/tmp/app.tar"
   end
   
+  # Extract stdin to app_dir and copy to build_root
   def copy_input
-    FileUtils.rm_rf(app_dir)
-    FileUtils.rm_rf(build_root)
-    FileUtils.cp_r("#{pushed_dir}/.", app_dir)
+    error("No app passed to STDIN") if STDIN.tty?      
+    
+    FileUtils.mkdir_p(app_dir)
+    File.open(tmptar, 'w+') { |f| f.write(STDIN.read) }
+    run!("tar -xf #{tmptar} -C #{app_dir}")
     FileUtils.cp_r("#{app_dir}/.", build_root)
   end
   
@@ -158,6 +161,7 @@ EOF
     # Cleanup
     FileUtils.rm_rf(build_root)
     FileUtils.rm_rf(buildpack_root)
+    FileUtils.rm(tmptar)
     
     FileUtils.touch('/.built')
   end

@@ -2,7 +2,7 @@ require "pebble_runner/builder"
 require "pebble_runner/runner"
 require "pebble_runner/starter"
 
-module PebbleRunner  
+module PebbleRunner
   class Init
     def self.start(command, arg=nil)
       built = PebbleRunner::Builder.built?
