@@ -17,7 +17,7 @@ class PebbleRunner::Builder
     release
     discover_services
     write_services
-    write_env
+    # write_env DEPRECATED
     finalize
   end
   
@@ -127,7 +127,7 @@ export HOME=/app
 for file in /app/.profile.d/*; do source \$file; done
 hash -r
 cd /app
-"\$@"
+eval "$@"
 EOF
     
     File.open(File.join(build_root, "exec"), 'w+') { |f| f.write(exec) }
@@ -176,7 +176,7 @@ EOF
     runner = <<-EOF
 #!/bin/sh
 exec 2>&1
-exec /app/exec chpst -u app #{cmd}
+exec /app/exec 'chpst -u app #{cmd}'
 EOF
 
     logger = <<-EOF
