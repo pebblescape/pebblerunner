@@ -5,8 +5,8 @@ require "pebble_runner/run_helpers"
 class PebbleRunner::Starter
   include PebbleRunner::RunHelpers
   
-  def initialize
-    topic "Starting services"
-    run_service
+  def initialize(name)
+    topic "Starting proc #{name}"
+    run_proc(name)
   end
 end

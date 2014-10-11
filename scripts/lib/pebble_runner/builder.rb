@@ -15,9 +15,6 @@ class PebbleRunner::Builder
     select_buildpack
     compile
     release
-    discover_services
-    write_services
-    # write_env DEPRECATED
     finalize
   end
   
@@ -40,14 +37,18 @@ class PebbleRunner::Builder
     File.open(tmptar, 'w+') { |f| f.write(STDIN.read) }
     run!("tar -xf #{tmptar} -C #{app_dir}")
     FileUtils.cp_r("#{app_dir}/.", build_root)
+    FileUtils.chown_R('app', 'app', app_dir)
+    FileUtils.chown_R('app', 'app', build_root)
+    FileUtils.chown_R('app', 'app', cache_root)
   end
   
   def set_env
     user_env_hash['REQUEST_ID'] = run("openssl rand -base64 32")
     user_env_hash['APP_DIR'] = app_dir
     user_env_hash['HOME'] = app_dir
-    user_env_hash['CURL_TIMEOUT'] = '120'
-    user_env_hash['CURL_CONNECT_TIMEOUT'] = '5'
+    user_env_hash['CURL_TIMEOUT'] = '60'
+    user_env_hash['CURL_CONNECT_TIMEOUT'] = '10'
+    user_env_hash['STACK'] = 'cedar-14'
   end
   
   def select_buildpack
@@ -81,45 +82,13 @@ class PebbleRunner::Builder
   end
   
   def compile
-    pipe!("#{selected_buildpack.shellescape}/bin/compile #{build_root.shellescape} #{cache_root.shellescape} #{env_dir.shellescape}", no_indent: true, user_env: true)
+    pipe!("chpst -u app #{selected_buildpack.shellescape}/bin/compile #{build_root.shellescape} #{cache_root.shellescape} #{env_dir.shellescape}", no_indent: true, user_env: true)
   end
   
   def release
-    rel = run!("#{selected_buildpack.shellescape}/bin/release #{build_root.shellescape} #{cache_root.shellescape} #{env_dir.shellescape}", user_env: true)
-    File.open(File.join(build_root, ".release"), 'w') do |f|
-      f.write(rel)
-    end
-  end
-  
-  def discover_services
-    topic "Discovering process types"
+    rel = run!("chpst -u app #{selected_buildpack.shellescape}/bin/release #{build_root.shellescape} #{cache_root.shellescape} #{env_dir.shellescape}", user_env: true)
     
-    if Pathname.new("#{build_root}/Procfile").exist?
-      types = YAML.load_file(File.join(build_root, "Procfile")).keys().join(', ')
-      puts "Procfile declares types -> #{types}"
-    end
-    
-    if Pathname.new("#{build_root}/.release").exist?
-      types = (YAML.load_file(File.join(build_root, ".release"))['default_process_types'] || {}).keys().join(', ')
-      puts "Default process types for #{buildpack_name} -> #{types}"
-    end
-  end
-  
-  def write_services
-    if Pathname.new("#{build_root}/Procfile").exist?
-      puts "Writing Procfile services to /etc/service"
-      
-      (YAML.load_file(File.join(build_root, "Procfile")) || {}).each do |name, cmd|
-        runit_service(name, cmd)
-      end
-    else
-      puts "Writing default services to /etc/service"
-      
-      (YAML.load_file(File.join(build_root, ".release"))['default_process_types'] || {}).each do |name, cmd|
-        next if %w(rake console).include?(name)
-        runit_service(name, cmd)
-      end
-    end
+    File.open(File.join(build_root, ".release"), 'w') { |f| f.write(rel) }
     
     exec = <<-EOF
 #!/bin/bash
@@ -132,21 +101,6 @@ EOF
     
     File.open(File.join(build_root, "exec"), 'w+') { |f| f.write(exec) }
     File.chmod(0777, File.join(build_root, "exec"))
-  end
-  
-  # Create env_dir and write release config_vars to app's .profile.d
-  def write_env
-    FileUtils.mkdir_p(env_dir)
-    
-    config_vars = ""
-    config_vars_path = File.join(build_root, ".profile.d", "config_vars.sh")
-    
-    (YAML.load_file(File.join(build_root, ".release"))['config_vars'] || {}).each do |k,v|
-      config_vars += "export #{k.upcase}=#{v}\n"
-    end
-    
-    File.open(config_vars_path, 'w+') { |f| f.write(config_vars) }
-    File.chmod(0777, config_vars_path)
   end
   
   def finalize
@@ -168,29 +122,5 @@ EOF
   
   def self.built?
     Pathname.new('/.built').exist?
-  end
-  
-  private
-  
-  def runit_service(name, cmd)
-    runner = <<-EOF
-#!/bin/sh
-exec 2>&1
-exec /app/exec 'chpst -u app #{cmd}'
-EOF
-
-    logger = <<-EOF
-#!/bin/sh
-exec svlogd -tt /var/log/runit/#{name}
-EOF
-
-    FileUtils.mkdir_p("/etc/service/#{name}/log")
-    FileUtils.mkdir_p("/var/log/runit/#{name}")
-    
-    File.open("/etc/service/#{name}/run", 'w+') { |f| f.write(runner) }
-    File.chmod(0777, "/etc/service/#{name}/run")
-    
-    File.open("/etc/service/#{name}/log/run", 'w+') { |f| f.write(logger) }
-    File.chmod(0777, "/etc/service/#{name}/log/run")
   end
 end

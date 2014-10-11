@@ -14,12 +14,12 @@ module PebbleRunner
       when "run"
         PebbleRunner::Runner.new(arg)
       when "start"
-        PebbleRunner::Starter.new
+        PebbleRunner::Starter.new(arg)
       else
         puts "PebbleRunner usage:"
         puts "      build          build app pushed into container" unless built
-        puts "      start          start all processes defined in Procfile"
-        puts "      run <command>  run a one off command in the app environment"
+        puts "      run <command>  run a command in the app environment"
+        puts "      start <name>   run a command defined in the Procfile"
       end
     end
   end
