@@ -15,7 +15,10 @@ module PebbleRunner
     def run_proc(name)
       begin
         procfile = PebbleRunner::Procfile.new('/app/Procfile')
-        default_procs.each { |name, cmd| procfile[name] = cmd }        
+        default_procs.each do |key, cmd|
+          procfile[key] = cmd unless procfile[key]
+        end
+        
         command = procfile[name]
         
         if command

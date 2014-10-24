@@ -34,6 +34,7 @@ class PebbleRunner::Builder
     error("No app passed to STDIN") if STDIN.tty?      
     
     FileUtils.mkdir_p(app_dir)
+    FileUtils.mkdir_p(cache_root)
     File.open(tmptar, 'w+') { |f| f.write(STDIN.read) }
     run!("tar -xf #{tmptar} -C #{app_dir}")
     FileUtils.cp_r("#{app_dir}/.", build_root)
@@ -46,9 +47,9 @@ class PebbleRunner::Builder
     user_env_hash['REQUEST_ID'] = run("openssl rand -base64 32")
     user_env_hash['APP_DIR'] = app_dir
     user_env_hash['HOME'] = app_dir
-    user_env_hash['CURL_TIMEOUT'] = '60'
-    user_env_hash['CURL_CONNECT_TIMEOUT'] = '10'
-    user_env_hash['STACK'] = 'cedar-14'
+    user_env_hash['CURL_TIMEOUT'] = ENV['CURL_TIMEOUT'] || '60'
+    user_env_hash['CURL_CONNECT_TIMEOUT'] = ENV['CURL_CONNECT_TIMEOUT'] || '10'
+    user_env_hash['STACK'] = ENV['STACK'] || 'cedar-14'
   end
   
   def select_buildpack
