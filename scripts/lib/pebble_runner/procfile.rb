@@ -82,6 +82,14 @@ module PebbleRunner
         [ name, command ].join(": ")
       end.join("\n")
     end
+    
+    # Get the +Procfile+ as a +Hash+
+    #
+    def to_h
+      @entries.map do |name, command|
+        { name => command }
+      end
+    end
 
   private
 

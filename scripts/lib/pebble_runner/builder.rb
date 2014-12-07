@@ -1,9 +1,12 @@
 require "fileutils"
 require "yaml"
+require "json"
+require "pebble_runner/run_helpers"
 require "pebble_runner/shell_helpers"
 
 class PebbleRunner::Builder
   include PebbleRunner::ShellHelpers
+  include PebbleRunner::RunHelpers
   
   attr_accessor :app_dir, :build_root, :cache_root, :buildpack_root,
                 :env_dir, :selected_buildpack, :buildpack_name, :tmptar
@@ -118,7 +121,18 @@ EOF
     FileUtils.rm_rf(buildpack_root)
     FileUtils.rm(tmptar)
     
-    FileUtils.touch('/.built')
+    write_built
+  end
+  
+  def write_built
+    sizek = run("du -ks #{app_dir} | cut -f1").gsub("\n", "")
+    
+    info = {}
+    info['process_types'] = assembled_procs.to_h
+    info['app_size'] = sizek.to_i * 1024
+    info['buildpack_name'] = buildpack_name
+    
+    File.open('/.built', 'w+') { |f| f.write(JSON.dump(info)) }
   end
   
   def self.built?
