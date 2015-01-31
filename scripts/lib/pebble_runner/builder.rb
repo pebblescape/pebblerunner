@@ -44,6 +44,7 @@ class PebbleRunner::Builder
     FileUtils.chown_R('app', 'app', app_dir)
     FileUtils.chown_R('app', 'app', build_root)
     FileUtils.chown_R('app', 'app', cache_root)
+    FileUtils.chown_R('app', 'app', buildpack_root)
   end
   
   def set_env
@@ -63,6 +64,7 @@ class PebbleRunner::Builder
       buildpack = File.join(buildpack_root, "custom")
       FileUtils.rm_rf(buildpack)
       run!("git clone --quiet --depth=1 #{env('BUILDPACK_URL')} #{buildpack.shellescape}")
+      FileUtils.chown_R('app', 'app', buildpack_root)
       name = run("#{buildpack.shellescape}/bin/detect #{build_root}")
       $?.success? && selected = buildpack
     else

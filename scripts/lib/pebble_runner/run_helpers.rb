@@ -9,7 +9,7 @@ module PebbleRunner
     include PebbleRunner::ShellHelpers
     
     def run_exec(command)
-      exec(app_env, "/app/exec chpst -u app #{command.gsub('$', '\$')}")
+      exec(app_env, "/app/exec #{command.gsub('$', '\$')}")
     end
     
     def run_proc(name)
