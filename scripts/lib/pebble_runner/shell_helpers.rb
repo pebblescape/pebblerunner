@@ -1,6 +1,16 @@
 require "shellwords"
 require "pathname"
 
+class BuildpackError < StandardError
+end
+
+class NoShellEscape < String
+  def shellescape
+    self
+  end
+end
+
+
 module PebbleRunner
   module ShellHelpers
     @@user_env_hash = {}
@@ -86,7 +96,13 @@ module PebbleRunner
     # @param [String] command to be run
     def pipe(command, options = {})
       output = ""
-      IO.popen(command_options_to_string(command, options)) do |io|
+      mode = options[:pipe_stdin] ? 'r+' : 'r'
+      IO.popen(command_options_to_string(command, options), mode) do |io|
+        if options[:pipe_stdin]
+          io.write STDIN.read
+          io.close_write
+        end
+
         until io.eof?
           buffer = io.gets
           output << buffer
@@ -96,10 +112,11 @@ module PebbleRunner
 
       output
     end
-    
+
     def pipe!(command, options = {})
-      pipe(command, options)
+      result = pipe(command, options)
       exit 1 unless $?.success?
+      return result
     end
 
     # display a topic message

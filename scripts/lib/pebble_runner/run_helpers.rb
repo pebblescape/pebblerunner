@@ -38,11 +38,15 @@ module PebbleRunner
     end
     
     def assembled_procs
-      procfile = PebbleRunner::Procfile.new('/app/Procfile')
-      default_procs.each do |key, cmd|
-        procfile[key] = cmd unless procfile[key]
+      if File.exist?('/app/Procfile')
+        procfile = PebbleRunner::Procfile.new('/app/Procfile')
+        default_procs.each do |key, cmd|
+          procfile[key] = cmd unless procfile[key]
+        end
+        procfile
+      else
+        default_procs
       end
-      procfile
     end
   end
 end
