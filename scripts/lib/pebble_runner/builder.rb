@@ -41,7 +41,6 @@ class PebbleRunner::Builder
     File.open(tmptar, 'w+') { |f| f.write(STDIN.read) }
     run!("tar -xf #{tmptar} -C #{app_dir}")
     FileUtils.cp_r("#{app_dir}/.", build_root)
-    FileUtils.mkdir_p(File.join(app_dir), '.profile.d')
     FileUtils.chown_R('app', 'app', app_dir)
     FileUtils.chown_R('app', 'app', build_root)
     FileUtils.chown_R('app', 'app', cache_root)
@@ -99,8 +98,11 @@ class PebbleRunner::Builder
     
     exec = <<-EOF
 #!/bin/bash
+include () {
+    [[ -f "$1" ]] && source "$1"
+}
 export HOME=#{app_dir}
-for file in #{app_dir}/.profile.d/*; do source \$file; done
+for file in #{app_dir}/.profile.d/*; do include \$file; done
 hash -r
 cd #{app_dir}
 eval "$@"
@@ -114,6 +116,7 @@ EOF
     # Copy final version of the app to app_dir
     FileUtils.rm_rf(app_dir)
     FileUtils.cp_r("#{build_root}/.", app_dir)
+    FileUtils.mkdir_p(File.join(app_dir, '.profile.d'))
     FileUtils.chown_R('app', 'app', app_dir)
     
     app_size = run("du -hs #{app_dir} | cut -f1")
