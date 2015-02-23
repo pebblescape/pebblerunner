@@ -37,16 +37,20 @@ module PebbleRunner
       (YAML.load_file("/app/.release")['default_process_types'] || {})
     end
     
-    def assembled_procs
+    def procfile_procs
       if File.exist?('/app/Procfile')
-        procfile = PebbleRunner::Procfile.new('/app/Procfile')
-        default_procs.each do |key, cmd|
-          procfile[key] = cmd unless procfile[key]
-        end
-        procfile
+        PebbleRunner::Procfile.new('/app/Procfile').to_h
       else
-        default_procs
+        {}
       end
+    end
+    
+    def assembled_procs
+      procfile = procfile_procs
+      default_procs.each do |key, cmd|
+        procfile[key] = cmd unless procfile[key]
+      end
+      procfile
     end
   end
 end

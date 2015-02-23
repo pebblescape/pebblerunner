@@ -136,6 +136,10 @@ EOF
     info['buildpack_name'] = buildpack_name
     
     File.open('/.built', 'w+') { |f| f.write(JSON.dump(info)) }
+    
+    topic "Discovering process types"
+    puts "Procfile declares types     -> #{procfile_procs.empty? ? "(none)" : procfile_procs.keys.join(", ")}"
+    puts "Default types for #{buildpack_name[0...10]} -> #{default_procs.keys.join(", ")}"
   end
   
   def self.built?
