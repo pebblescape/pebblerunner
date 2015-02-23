@@ -141,7 +141,8 @@ EOF
     File.open('/.built', 'w+') { |f| f.write(JSON.dump(info)) }
     
     topic "Discovering process types"
-    puts "Procfile declares types     -> #{procfile_procs.empty? ? "(none)" : procfile_procs.keys.join(", ")}"
+    procfile_entries = procfile_procs.entries.map { |n,c| n }
+    puts "Procfile declares types     -> #{procfile_entries.empty? ? "(none)" : procfile_entries.join(", ")}"
     puts "Default types for #{buildpack_name[0...10]} -> #{default_procs.keys.join(", ")}"
   end
   

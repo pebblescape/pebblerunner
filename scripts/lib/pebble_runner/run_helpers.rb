@@ -39,7 +39,7 @@ module PebbleRunner
     
     def procfile_procs
       if File.exist?('/app/Procfile')
-        PebbleRunner::Procfile.new('/app/Procfile').to_h
+        PebbleRunner::Procfile.new('/app/Procfile')
       else
         {}
       end
