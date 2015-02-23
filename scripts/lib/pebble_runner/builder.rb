@@ -41,6 +41,7 @@ class PebbleRunner::Builder
     File.open(tmptar, 'w+') { |f| f.write(STDIN.read) }
     run!("tar -xf #{tmptar} -C #{app_dir}")
     FileUtils.cp_r("#{app_dir}/.", build_root)
+    FileUtils.mkdir_p(File.join(app_dir), '.profile.d')
     FileUtils.chown_R('app', 'app', app_dir)
     FileUtils.chown_R('app', 'app', build_root)
     FileUtils.chown_R('app', 'app', cache_root)
@@ -98,10 +99,10 @@ class PebbleRunner::Builder
     
     exec = <<-EOF
 #!/bin/bash
-export HOME=/app
-for file in /app/.profile.d/*; do source \$file; done
+export HOME=#{app_dir}
+for file in #{app_dir}/.profile.d/*; do source \$file; done
 hash -r
-cd /app
+cd #{app_dir}
 eval "$@"
 EOF
     
