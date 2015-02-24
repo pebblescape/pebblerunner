@@ -17,6 +17,8 @@ module PebbleRunner
       end
       
       case command
+      when "receiver"
+        PebbleRunner::Runner.new(arg, true)
       when "run"
         PebbleRunner::Runner.new(arg)
       when "start"
