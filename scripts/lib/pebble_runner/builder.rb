@@ -116,6 +116,7 @@ EOF
     # Copy final version of the app to app_dir
     FileUtils.rm_rf(app_dir)
     FileUtils.cp_r("#{build_root}/.", app_dir)
+    FileUtils.cp_r("#{build_root}/.git/", File.join(app_dir, '.git'))
     FileUtils.mkdir_p(File.join(app_dir, '.profile.d'))
     FileUtils.chown_R('app', 'app', app_dir)
     
