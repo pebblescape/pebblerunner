@@ -97,6 +97,12 @@ class PebbleRunner::Builder
     
     exec = <<-EOF
 #!/bin/bash
+include () {
+    [[ -f "$1" ]] && source "$1"
+}
+export HOME=#{app_dir}
+for file in #{app_dir}/.profile.d/*; do include \$file; done
+hash -r
 cd #{app_dir}
 eval "$@"
 EOF
