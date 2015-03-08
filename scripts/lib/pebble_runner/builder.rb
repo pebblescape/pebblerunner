@@ -39,8 +39,7 @@ class PebbleRunner::Builder
     FileUtils.mkdir_p(app_dir)
     FileUtils.mkdir_p(cache_root)
     File.open(tmptar, 'w+') { |f| f.write(STDIN.read) }
-    run!("tar -xf #{tmptar} -C #{app_dir}")
-    FileUtils.cp_r("#{app_dir}/.", build_root)
+    run!("tar -xf #{tmptar} -C #{build_root}")
     FileUtils.chown_R('app', 'app', app_dir)
     FileUtils.chown_R('app', 'app', build_root)
     FileUtils.chown_R('app', 'app', cache_root)
@@ -114,7 +113,6 @@ EOF
   
   def finalize
     # Copy final version of the app to app_dir
-    FileUtils.rm_rf(app_dir)
     FileUtils.cp_r("#{build_root}/.", app_dir)
     FileUtils.mkdir_p(File.join(app_dir, '.profile.d'))
     FileUtils.chown_R('app', 'app', app_dir)
