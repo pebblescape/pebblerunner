@@ -36,7 +36,7 @@ class PebbleRunner::Builder
   def copy_input
     error("No app passed to STDIN") if STDIN.tty?      
     
-    FileUtils.mkdir_p(app_dir)
+    FileUtils.mkdir_p(build_root)
     FileUtils.mkdir_p(cache_root)
     File.open(tmptar, 'w+') { |f| f.write(STDIN.read) }
     run!("tar -xf #{tmptar} -C #{build_root}")
