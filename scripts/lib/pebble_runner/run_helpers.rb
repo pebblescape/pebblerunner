@@ -9,8 +9,7 @@ module PebbleRunner
     include PebbleRunner::ShellHelpers
     
     def run_exec(command)
-      cmd = "cd app && #{command.gsub('$', '\$')}"
-      exec("bash -ic #{cmd.shellescape}")
+      exec("/app/exec #{command.gsub('$', '\$')}")
     end
     
     def run_proc(name)
