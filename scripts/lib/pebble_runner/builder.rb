@@ -94,21 +94,6 @@ class PebbleRunner::Builder
     rel = run!("chpst -u app #{selected_buildpack.shellescape}/bin/release #{build_root.shellescape} #{cache_root.shellescape} #{env_dir.shellescape}", user_env: true)
     
     File.open(File.join(build_root, ".release"), 'w') { |f| f.write(rel) }
-    
-    exec = <<-EOF
-#!/bin/bash
-include () {
-    [[ -f "$1" ]] && source "$1"
-}
-export HOME=#{app_dir}
-for file in #{app_dir}/.profile.d/*; do include \$file; done
-hash -r
-cd #{app_dir}
-eval "$@"
-EOF
-    
-    File.open(File.join(build_root, "exec"), 'w+') { |f| f.write(exec) }
-    File.chmod(0777, File.join(build_root, "exec"))
   end
   
   def finalize

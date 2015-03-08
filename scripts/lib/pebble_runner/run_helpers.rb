@@ -9,7 +9,8 @@ module PebbleRunner
     include PebbleRunner::ShellHelpers
     
     def run_exec(command)
-      exec(app_env, "/app/exec #{command.gsub('$', '\$')}")
+      cmd = "cd app && #{command.gsub('$', '\$')}"
+      exec("bash -ic #{cmd.shellescape}")
     end
     
     def run_proc(name)
@@ -27,11 +28,6 @@ module PebbleRunner
     end
     
     private
-    
-    def app_env
-      env = {'HOME' => '/app'}
-      user_env_hash.merge(env)
-    end
     
     def default_procs
       (YAML.load_file("/app/.release")['default_process_types'] || {})
