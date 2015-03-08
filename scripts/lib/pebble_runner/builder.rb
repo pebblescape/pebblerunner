@@ -117,6 +117,17 @@ EOF
     FileUtils.mkdir_p(File.join(app_dir, '.profile.d'))
     FileUtils.chown_R('app', 'app', app_dir)
     
+    bashrc = <<-EOF
+include () {
+    [[ -f "$1" ]] && source "$1"
+}
+export HOME=#{app_dir}
+for file in #{app_dir}/.profile.d/*; do include \$file; done
+hash -r
+EOF
+    
+    File.open(File.join(app_dir, ".bashrc"), 'a') { |f| f.write(bashrc) }
+    
     app_size = run("du -hs #{app_dir} | cut -f1")
     puts "Compiled app size is #{app_size}"
     
