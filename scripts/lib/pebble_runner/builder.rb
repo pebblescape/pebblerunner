@@ -36,6 +36,7 @@ class PebbleRunner::Builder
   def copy_input
     error("No app passed to STDIN") if STDIN.tty?      
     
+    FileUtils.mkdir_p(app_dir)
     FileUtils.mkdir_p(build_root)
     FileUtils.mkdir_p(cache_root)
     File.open(tmptar, 'w+') { |f| f.write(STDIN.read) }
@@ -132,8 +133,11 @@ EOF
     puts "Compiled app size is #{app_size}"
     
     # Cleanup
-    FileUtils.rm_rf(build_root)
-    FileUtils.rm_rf(buildpack_root)
+    unless env('SKIP_CLEANUP')
+      FileUtils.rm_rf(buildpack_root)
+    end
+    
+    FileUtils.rm_rf(build_root)    
     FileUtils.rm(tmptar)
     
     write_built
@@ -147,12 +151,14 @@ EOF
     info['app_size'] = sizek.to_i * 1024
     info['buildpack_name'] = buildpack_name
     
-    File.open('/.built', 'w+') { |f| f.write(JSON.dump(info)) }
-    
     topic "Discovering process types"
     procfile_entries = procfile_procs.entries.map { |n,c| n }
     puts "Procfile declares types     -> #{procfile_entries.empty? ? "(none)" : procfile_entries.join(", ")}"
     puts "Default types for #{buildpack_name[0...10]} -> #{default_procs.keys.join(", ")}"
+    
+    unless env('SKIP_CLEANUP')
+      File.open('/.built', 'w+') { |f| f.write(JSON.dump(info)) }
+    end
   end
   
   def self.built?
