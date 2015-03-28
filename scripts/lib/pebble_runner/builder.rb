@@ -133,14 +133,32 @@ EOF
     puts "Compiled app size is #{app_size}"
     
     # Cleanup
-    unless env('SKIP_CLEANUP')
-      FileUtils.rm_rf(buildpack_root)
-    end
-    
+    FileUtils.rm_rf(buildpack_root)    
     FileUtils.rm_rf(build_root)    
     FileUtils.rm(tmptar)
     
+    write_services
     write_built
+  end
+  
+  def write_services
+    procfile_procs.entries.map do |name, cmd|
+      exec = <<-EOF
+#!/bin/bash
+include () {
+    [[ -f "$1" ]] && source "$1"
+}
+export HOME=#{app_dir}
+for file in #{app_dir}/.profile.d/*; do include \$file; done
+hash -r
+cd #{app_dir}
+exec #{cmd}
+EOF
+      path = File.join("/etc/services-available", "app-#{name}")
+      FileUtils.mkdir_p(path)
+      File.open(File.join(path, "run"), 'w+') { |f| f.write(exec) }
+      File.chmod(0777, File.join(path, "run"))
+    end
   end
   
   def write_built
@@ -156,9 +174,7 @@ EOF
     puts "Procfile declares types     -> #{procfile_entries.empty? ? "(none)" : procfile_entries.join(", ")}"
     puts "Default types for #{buildpack_name[0...10]} -> #{default_procs.keys.join(", ")}"
     
-    unless env('SKIP_CLEANUP')
-      File.open('/.built', 'w+') { |f| f.write(JSON.dump(info)) }
-    end
+    File.open('/.built', 'w+') { |f| f.write(JSON.dump(info)) }
   end
   
   def self.built?

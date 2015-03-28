@@ -15,9 +15,11 @@ module PebbleRunner
     def run_proc(name)
       begin
         command = assembled_procs[name]
+        svpath = File.join("/etc/services-available", "app-#{name}")
         
-        if command
-          run_exec(command)
+        if command && Dir.exist?(svpath)
+          FileUtils.ln_s(svpath, '/etc/service', force: true)
+          exec("/usr/bin/runsvdir -P /etc/service")
         else
           error "No such process type"
         end
@@ -36,7 +38,7 @@ module PebbleRunner
       if File.exist?('/app/Procfile')
         PebbleRunner::Procfile.new('/app/Procfile')
       else
-        {}
+        PebbleRunner::Procfile.new
       end
     end
     
